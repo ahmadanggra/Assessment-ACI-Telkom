@@ -1,3 +1,6 @@
 out_files/
 pr.txt
 credential.py
+__pycache__/credential.cpython-312.pyc
+__pycache__/parsing_tshot.cpython-312.pyc
+__pycache__/parsing.cpython-312.pyc
