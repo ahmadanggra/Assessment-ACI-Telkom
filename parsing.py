@@ -87,7 +87,7 @@ def parsingVLANToCsv(param_apic_url:str, param_cookie:dict):
                             #v_range = v_range + '(alloc: ' + alloc + ')' + ' (role: ' + role + ')'
                             v_list.append(v_range)
                         if 'fvnsRtVlanNs' in k:
-                            v_dom_prefix = ['uni\/l3dom-','uni\/l2dom-','uni\/phys-','uni\/vmmp-VMware\/dom-']
+                            v_dom_prefix = [r'uni\/l3dom-',r'uni\/l2dom-',r'uni\/phys-',r'uni\/vmmp-VMware\/dom-']
                             v_dom_temp = k[l]['attributes']['tDn']
                             v_dom = re.sub('|'.join(sorted(v_dom_prefix, key = len, reverse = True)), '', v_dom_temp)
                             v_domain.append(v_dom)
@@ -726,7 +726,7 @@ def parsingL3outToCsv3(param_apic_url:str, param_cookie:dict):
 
     path_csv = getCSVPath('out_files', 'l3out.csv')
     with open(path_csv, 'w', newline='', encoding='utf-8') as file:
-        csv_writter = csv.writer(file, delimiter=";")
+        csv_writter = csv.writer(file, delimiter=",")
         csv_writter.writerow(
             ['tenant', 'l3out_name', 'logical_node_profile', 'leaf', 'logical_interface', 'path', 'ext-subnet', 'ip_address','vlan','l3out_type']
         )
@@ -912,7 +912,7 @@ def domToAepCSV(param_apic_url:str, param_cookie:dict):
                     for l in k:
                         if 'infraRsDomP' in k:
                             data = k[l]['attributes']['tDn']
-                            data_prefix = ['uni\/l3dom-','uni\/l2dom-','uni\/phys-','uni\/vmmp-VMware\/dom-']
+                            data_prefix = [r'uni\/l3dom-',r'uni\/l2dom-',r'uni\/phys-',r'uni\/vmmp-VMware\/dom-']
                             aep_dom = re.sub('|'.join(sorted(data_prefix, key = len, reverse = True)), '', data)
                             dom_type = data.split('-')[0].replace('uni/','')
                             csv_writter.writerow(
