@@ -188,7 +188,7 @@ def parsingEpToCsv(param_apic_url:str, param_cookie:dict):
                                 endpoint_epg = endpoint_data[2].replace('ctx-','')
                                 ep_leaf = ['protpaths-','paths-']
                                 endpoint_leaf  = re.sub('|'.join(sorted(ep_leaf, key = len, reverse = True)), '', endpoint_data[6])
-                                ep_staticport = ['pathep-','\[','\]']
+                                ep_staticport = ['pathep-',r'\[',r'\]']
                                 endpoint_desc='vrf endpoint'
                                 if len(endpoint_data) == 8:
                                     endpoint_staticport.append(re.sub('|'.join(sorted(ep_staticport, key = len, reverse = True)), '', endpoint_data[7]))
@@ -202,7 +202,7 @@ def parsingEpToCsv(param_apic_url:str, param_cookie:dict):
                                 endpoint_tenant = endpoint_data[1].replace('tn-','')
                                 endpoint_ap = endpoint_data[2].replace('ap-','')
                                 endpoint_epg = endpoint_data[3].replace('epg-','')
-                                ep_staticport = ['pathep-','pathgrp-','\[','\]']
+                                ep_staticport = ['pathep-','pathgrp-',r'\[',r'\]']
                                 # assign vmm attached leaf node
                                 if 'pathgrp-' in endpoint_data_temp:
                                     leaf_len = len(k[l]['children'][0:])
@@ -301,7 +301,7 @@ def parsingEpToCsv_aciv5(param_apic_url:str, param_cookie:dict):
                                 endpoint_epg = endpoint_data[2].replace('ctx-','')
                                 ep_leaf = ['protpaths-','paths-']
                                 endpoint_leaf  = re.sub('|'.join(sorted(ep_leaf, key = len, reverse = True)), '', endpoint_data[6])
-                                ep_staticport = ['pathep-',r'\[','\]']
+                                ep_staticport = ['pathep-',r'\[',r'\]']
                                 endpoint_desc='vrf endpoint'
                                 if len(endpoint_data) == 8:
                                     endpoint_staticport.append(re.sub('|'.join(sorted(ep_staticport, key = len, reverse = True)), '', endpoint_data[7]))
@@ -315,7 +315,7 @@ def parsingEpToCsv_aciv5(param_apic_url:str, param_cookie:dict):
                                 endpoint_tenant = endpoint_data[1].replace('tn-','')
                                 endpoint_ap = endpoint_data[2].replace('ap-','')
                                 endpoint_epg = endpoint_data[3].replace('epg-','')
-                                ep_staticport = ['pathep-','pathgrp-',r'\[','\]']
+                                ep_staticport = ['pathep-','pathgrp-',r'\[',r'\]']
                                 # assign vmm attached leaf node
                                 if 'pathgrp-' in endpoint_data_temp:
                                     leaf_len = len(k[l]['children'][0:])
@@ -391,7 +391,7 @@ def parsingCdpLldpToCsv(param_apic_url:str, param_cookie:dict):
                 protocol = 'cdp'
                 pod = i[j]['attributes']['dn'].split('/')[1]
                 local_device = i[j]['attributes']['dn'].split('/')[2].replace('node-','')
-                local_port_remove = ['if-\[','\]']
+                local_port_remove = [r'if-\[',r'\]']
                 local_port_temp = i[j]['attributes']['dn'].split('/')[6] + '/' + i[j]['attributes']['dn'].split('/')[7]
                 local_port= re.sub('|'.join(sorted(local_port_remove, key = len, reverse = True)), '', local_port_temp)
                 remote_device = i[j]['attributes']['devId']
@@ -406,7 +406,7 @@ def parsingCdpLldpToCsv(param_apic_url:str, param_cookie:dict):
                 protocol = 'lldp'
                 pod = i[j]['attributes']['dn'].split('/')[1]
                 local_device = i[j]['attributes']['dn'].split('/')[2].replace('node-','')
-                local_port_remove = ['if-\[','\]']
+                local_port_remove = [r'if-\[',r'\]']
                 local_port_temp = i[j]['attributes']['dn'].split('/')[6] + '/' + i[j]['attributes']['dn'].split('/')[7]
                 local_port= re.sub('|'.join(sorted(local_port_remove, key = len, reverse = True)), '', local_port_temp)
                 remote_device = i[j]['attributes']['sysName']
@@ -462,7 +462,7 @@ def parsingEpgToCsv(param_apic_url:str, param_cookie:dict):
                             data_path = k[l]['attributes']['tDn'].split('/')[3]
                             data_leaf = k[l]['attributes']['tDn'].split('/')[2]
                             remove_leaf = ['protpaths-','paths-']
-                            remove_path = ['pathep-\[','\]']
+                            remove_path = [r'pathep-\[',r'\]']
                             if 'eth' in data_path:
                                 data_path = k[l]['attributes']['tDn'].split('/')[3] + '/' + k[l]['attributes']['tDn'].split('/')[-1]
                                 static_path = \
@@ -668,7 +668,7 @@ def parsingL2outToCsv(param_apic_url:str, param_cookie:dict):
                                                                 leaf_temp = o[p]['attributes']['dn'].split('/')[7]
                                                                 leaf.append(re.sub('|'.join(sorted(leaf_prefix, key = len, reverse = True)), '', leaf_temp))
                                                                 leaf_path = re.sub('|'.join(sorted(leaf_prefix, key = len, reverse = True)), '', leaf_temp)
-                                                                path_prefix = ['pathep-\[','\]']
+                                                                path_prefix = [r'pathep-\[',r'\]']
                                                                 path_temp =  o[p]['attributes']['dn'].split('/')[-1]
                                                                 l2out_path.append(leaf_path + ': ' + re.sub('|'.join(sorted(path_prefix, key = len, reverse = True)), '', path_temp)) 
                                                                 '''print(leaf)
@@ -678,7 +678,7 @@ def parsingL2outToCsv(param_apic_url:str, param_cookie:dict):
                                                                 leaf_temp = o[p]['attributes']['dn'].split('/')[7]
                                                                 leaf.append(re.sub('|'.join(sorted(leaf_prefix, key = len, reverse = True)), '', leaf_temp))
                                                                 leaf_path = re.sub('|'.join(sorted(leaf_prefix, key = len, reverse = True)), '', leaf_temp)
-                                                                path_prefix = ['pathep-\[','\]']
+                                                                path_prefix = [r'pathep-\[',r'\]']
                                                                 path_temp =  o[p]['attributes']['dn'].split('/')[8] + '/' + o[p]['attributes']['dn'].split('/')[-1]
                                                                 l2out_path.append(leaf_path + ': ' + re.sub('|'.join(sorted(path_prefix, key = len, reverse = True)), '', path_temp))
                         if 'l2extInstP' in l:
@@ -775,12 +775,12 @@ def parsingL3outToCsv3(param_apic_url:str, param_cookie:dict):
                                                             path_len = l3extRsPathL3OutAtt_dn.split('/')
                                                             
                                                             if len(path_len) == 9:
-                                                                path_prefix = ['pathep-\[','\]']
+                                                                path_prefix = [r'pathep-\[',r'\]']
                                                                 leaf_id = l3extRsPathL3OutAtt_dn.split('/')[7].replace('protpaths-','')
                                                                 path_temp = leaf_id + ': ' + l3extRsPathL3OutAtt_dn.split('/')[8]
                                                                 logical_interface_data['path'].append(re.sub('|'.join(sorted(path_prefix, key = len, reverse = True)), '', path_temp))
                                                             else:
-                                                                path_prefix = ['pathep-\[','\]']
+                                                                path_prefix = [r'pathep-\[',r'\]']
                                                                 leaf_id = l3extRsPathL3OutAtt_dn.split('/')[7].replace('paths-','')
                                                                 path_temp = \
                                                                     leaf_id \
