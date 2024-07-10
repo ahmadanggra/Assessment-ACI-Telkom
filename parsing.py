@@ -87,7 +87,7 @@ def parsingVLANToCsv(param_apic_url:str, param_cookie:dict):
                             #v_range = v_range + '(alloc: ' + alloc + ')' + ' (role: ' + role + ')'
                             v_list.append(v_range)
                         if 'fvnsRtVlanNs' in k:
-                            v_dom_prefix = ['uni\/l3dom-','uni\/l2dom-','uni\/phys-','uni\/vmmp-VMware\/dom-']
+                            v_dom_prefix = [r'uni\/l3dom-',r'uni\/l2dom-',r'uni\/phys-',r'uni\/vmmp-VMware\/dom-']
                             v_dom_temp = k[l]['attributes']['tDn']
                             v_dom = re.sub('|'.join(sorted(v_dom_prefix, key = len, reverse = True)), '', v_dom_temp)
                             v_domain.append(v_dom)
@@ -188,7 +188,7 @@ def parsingEpToCsv(param_apic_url:str, param_cookie:dict):
                                 endpoint_epg = endpoint_data[2].replace('ctx-','')
                                 ep_leaf = ['protpaths-','paths-']
                                 endpoint_leaf  = re.sub('|'.join(sorted(ep_leaf, key = len, reverse = True)), '', endpoint_data[6])
-                                ep_staticport = ['pathep-','\[','\]']
+                                ep_staticport = ['pathep-',r'\[',r'\]']
                                 endpoint_desc='vrf endpoint'
                                 if len(endpoint_data) == 8:
                                     endpoint_staticport.append(re.sub('|'.join(sorted(ep_staticport, key = len, reverse = True)), '', endpoint_data[7]))
@@ -202,7 +202,7 @@ def parsingEpToCsv(param_apic_url:str, param_cookie:dict):
                                 endpoint_tenant = endpoint_data[1].replace('tn-','')
                                 endpoint_ap = endpoint_data[2].replace('ap-','')
                                 endpoint_epg = endpoint_data[3].replace('epg-','')
-                                ep_staticport = ['pathep-','pathgrp-','\[','\]']
+                                ep_staticport = ['pathep-','pathgrp-',r'\[',r'\]']
                                 # assign vmm attached leaf node
                                 if 'pathgrp-' in endpoint_data_temp:
                                     leaf_len = len(k[l]['children'][0:])
@@ -248,6 +248,119 @@ def parsingEpToCsv(param_apic_url:str, param_cookie:dict):
                 endpoint_encapvlan = ''
                 endpoint_staticport.clear()    
 
+# moquery -c fvCEp -x 'rsp-subtree=full'  -o json
+def parsingEpToCsv_aciv5(param_apic_url:str, param_cookie:dict):
+    # query the apic
+    response = apic_query(apic=param_apic_url, path='/api/node/class/fvCEp.json?rsp-subtree=full', cookie=param_cookie)
+
+    # variable definition
+    endpoint = dict()
+    endpoint_tenant = str()
+    endpoint_ap = str()
+    endpoint_epg = str()
+    endpoint_mac = str()
+    endpoint_leaf  = str()
+    endpoint_staticport = list()
+    endpoint_desc = str()
+    endpoint_ip = str()
+    endpoint_encapvlan = str()
+
+    path_csv = getCSVPath('out_files', 'endpoint.csv')
+    with open(path_csv, 'w', newline='', encoding='utf-8') as file:
+        csv_writter = csv.writer(file)
+        csv_writter.writerow(
+            ['tenant', 'ap', 'epg', 'mac', 'ip', 'encap-vlan', 'leaf', 'static_port', 'description'])
+        
+        # generating data from json
+        endpoint_list = json.loads(response.text)
+        endpoint = endpoint_list['imdata']
+        #print(endpoint)
+        for i in endpoint:
+            for j in i:
+                endpoint_encapvlan = i[j]['attributes']['encap']
+                endpoint_mac = i[j]['attributes']['mac']
+                if 'children' in i[j]:
+                    for_k = i[j]['children']
+                    for k in for_k:
+                        for l in k:
+                            if 'fvIp' in l:
+                                endpoint_ip = k[l]['attributes']['addr']
+                for_k = i[j]['children']
+                # loop children of fvCEp
+                for k in for_k:
+                    for l in k:
+                        if 'fvRsCEpToPathEp' in l:
+                            # workaround for api query sub class fvRsCEpToPathEp not returning dn
+                            endpoint_data_temp = i[j]['attributes']['dn'] + '/' + k[l]['attributes']['rn']
+                            endpoint_data = endpoint_data_temp.split('/')
+                            # for endpoint listed as vrf endpoint
+                            if 'ctx-' in endpoint_data_temp:
+                                #print(endpoint_data)
+                                endpoint_tenant = endpoint_data[1].replace('tn-','')
+                                endpoint_ap = ''
+                                endpoint_epg = endpoint_data[2].replace('ctx-','')
+                                ep_leaf = ['protpaths-','paths-']
+                                endpoint_leaf  = re.sub('|'.join(sorted(ep_leaf, key = len, reverse = True)), '', endpoint_data[6])
+                                ep_staticport = ['pathep-',r'\[',r'\]']
+                                endpoint_desc='vrf endpoint'
+                                if len(endpoint_data) == 8:
+                                    endpoint_staticport.append(re.sub('|'.join(sorted(ep_staticport, key = len, reverse = True)), '', endpoint_data[7]))
+                                else:
+                                    temp_endpoint_staticport = re.sub('|'.join(sorted(ep_staticport, key = len, reverse = True)), '', endpoint_data[7]) + '/' 
+                                    temp_endpoint_staticport += re.sub('|'.join(sorted(ep_staticport, key = len, reverse = True)), '', endpoint_data[8])
+                                    endpoint_staticport.append(temp_endpoint_staticport)                                    
+                            # for endpoint category vmm
+                            else:
+                                #print(endpoint_data)
+                                endpoint_tenant = endpoint_data[1].replace('tn-','')
+                                endpoint_ap = endpoint_data[2].replace('ap-','')
+                                endpoint_epg = endpoint_data[3].replace('epg-','')
+                                ep_staticport = ['pathep-','pathgrp-',r'\[',r'\]']
+                                # assign vmm attached leaf node
+                                if 'pathgrp-' in endpoint_data_temp:
+                                    leaf_len = len(k[l]['children'][0:])
+                                    leaf_count = 0
+                                    for leaf in k[l]['children'][0:]:
+                                        if leaf_count ==0:
+                                            endpoint_leaf  = leaf['fvReportingNode']['attributes']['id']
+                                        else:
+                                            endpoint_leaf  += '-' + leaf['fvReportingNode']['attributes']['id']
+                                        leaf_count += 1
+                                        if leaf_count == leaf_len:
+                                            break
+                                    endpoint_desc='vmm endpoint vcenter'       
+                                    endpoint_staticport.append(re.sub('|'.join(sorted(ep_staticport, key = len, reverse = True)), '', endpoint_data[7]))
+                                # assign leaf node to non vmm
+                                else:
+                                    ep_leaf = ['protpaths-','paths-']
+                                    endpoint_leaf  = re.sub('|'.join(sorted(ep_leaf, key = len, reverse = True)), '', endpoint_data[7])
+                                    endpoint_desc=''
+                                    if len(endpoint_data) == 9:
+                                        endpoint_staticport.append(re.sub('|'.join(sorted(ep_staticport, key = len, reverse = True)), '', endpoint_data[8]))
+                                    else:
+                                        temp_endpoint_staticport = re.sub('|'.join(sorted(ep_staticport, key = len, reverse = True)), '', endpoint_data[8]) + '/'
+                                        temp_endpoint_staticport += re.sub('|'.join(sorted(ep_staticport, key = len, reverse = True)), '', endpoint_data[9])
+                                        endpoint_staticport.append(temp_endpoint_staticport) 
+                endpoint_staticport_string = ' '.join(endpoint_staticport)
+                # for endpoint without fvRsCEpToPathEp (e.g vrf (ctx-x))
+                if endpoint_tenant == '' and endpoint_ap == '' and endpoint_epg == '':
+                    endpoint_tenant = endpoint_data[1].replace('tn-','')
+                    endpoint_ap = ''
+                    endpoint_epg = endpoint_data[2].replace('ctx-','')
+                    endpoint_leaf = ''
+                    endpoint_desc='vrf endpoint'
+
+                csv_writter.writerow([endpoint_tenant, endpoint_ap,endpoint_epg,endpoint_mac,endpoint_ip,endpoint_encapvlan, endpoint_leaf,endpoint_staticport_string,endpoint_desc])
+                endpoint_tenant = ''
+                endpoint_ap = ''
+                endpoint_epg = ''
+                endpoint_mac = ''
+                endpoint_leaf = ''
+                endpoint_desc = ''
+                endpoint_ip = ''
+                endpoint_encapvlan = ''
+                endpoint_staticport.clear()   
+
 # moquery -c cdpAdjEp -o json & moquery -c lldpAdjEp -o json
 def parsingCdpLldpToCsv(param_apic_url:str, param_cookie:dict):
     # query the apic
@@ -278,7 +391,7 @@ def parsingCdpLldpToCsv(param_apic_url:str, param_cookie:dict):
                 protocol = 'cdp'
                 pod = i[j]['attributes']['dn'].split('/')[1]
                 local_device = i[j]['attributes']['dn'].split('/')[2].replace('node-','')
-                local_port_remove = ['if-\[','\]']
+                local_port_remove = [r'if-\[',r'\]']
                 local_port_temp = i[j]['attributes']['dn'].split('/')[6] + '/' + i[j]['attributes']['dn'].split('/')[7]
                 local_port= re.sub('|'.join(sorted(local_port_remove, key = len, reverse = True)), '', local_port_temp)
                 remote_device = i[j]['attributes']['devId']
@@ -293,7 +406,7 @@ def parsingCdpLldpToCsv(param_apic_url:str, param_cookie:dict):
                 protocol = 'lldp'
                 pod = i[j]['attributes']['dn'].split('/')[1]
                 local_device = i[j]['attributes']['dn'].split('/')[2].replace('node-','')
-                local_port_remove = ['if-\[','\]']
+                local_port_remove = [r'if-\[',r'\]']
                 local_port_temp = i[j]['attributes']['dn'].split('/')[6] + '/' + i[j]['attributes']['dn'].split('/')[7]
                 local_port= re.sub('|'.join(sorted(local_port_remove, key = len, reverse = True)), '', local_port_temp)
                 remote_device = i[j]['attributes']['sysName']
@@ -349,7 +462,7 @@ def parsingEpgToCsv(param_apic_url:str, param_cookie:dict):
                             data_path = k[l]['attributes']['tDn'].split('/')[3]
                             data_leaf = k[l]['attributes']['tDn'].split('/')[2]
                             remove_leaf = ['protpaths-','paths-']
-                            remove_path = ['pathep-\[','\]']
+                            remove_path = [r'pathep-\[',r'\]']
                             if 'eth' in data_path:
                                 data_path = k[l]['attributes']['tDn'].split('/')[3] + '/' + k[l]['attributes']['tDn'].split('/')[-1]
                                 static_path = \
@@ -555,7 +668,7 @@ def parsingL2outToCsv(param_apic_url:str, param_cookie:dict):
                                                                 leaf_temp = o[p]['attributes']['dn'].split('/')[7]
                                                                 leaf.append(re.sub('|'.join(sorted(leaf_prefix, key = len, reverse = True)), '', leaf_temp))
                                                                 leaf_path = re.sub('|'.join(sorted(leaf_prefix, key = len, reverse = True)), '', leaf_temp)
-                                                                path_prefix = ['pathep-\[','\]']
+                                                                path_prefix = [r'pathep-\[',r'\]']
                                                                 path_temp =  o[p]['attributes']['dn'].split('/')[-1]
                                                                 l2out_path.append(leaf_path + ': ' + re.sub('|'.join(sorted(path_prefix, key = len, reverse = True)), '', path_temp)) 
                                                                 '''print(leaf)
@@ -565,7 +678,7 @@ def parsingL2outToCsv(param_apic_url:str, param_cookie:dict):
                                                                 leaf_temp = o[p]['attributes']['dn'].split('/')[7]
                                                                 leaf.append(re.sub('|'.join(sorted(leaf_prefix, key = len, reverse = True)), '', leaf_temp))
                                                                 leaf_path = re.sub('|'.join(sorted(leaf_prefix, key = len, reverse = True)), '', leaf_temp)
-                                                                path_prefix = ['pathep-\[','\]']
+                                                                path_prefix = [r'pathep-\[',r'\]']
                                                                 path_temp =  o[p]['attributes']['dn'].split('/')[8] + '/' + o[p]['attributes']['dn'].split('/')[-1]
                                                                 l2out_path.append(leaf_path + ': ' + re.sub('|'.join(sorted(path_prefix, key = len, reverse = True)), '', path_temp))
                         if 'l2extInstP' in l:
@@ -613,7 +726,7 @@ def parsingL3outToCsv3(param_apic_url:str, param_cookie:dict):
 
     path_csv = getCSVPath('out_files', 'l3out.csv')
     with open(path_csv, 'w', newline='', encoding='utf-8') as file:
-        csv_writter = csv.writer(file, delimiter=";")
+        csv_writter = csv.writer(file, delimiter=",")
         csv_writter.writerow(
             ['tenant', 'l3out_name', 'logical_node_profile', 'leaf', 'logical_interface', 'path', 'ext-subnet', 'ip_address','vlan','l3out_type']
         )
@@ -662,12 +775,12 @@ def parsingL3outToCsv3(param_apic_url:str, param_cookie:dict):
                                                             path_len = l3extRsPathL3OutAtt_dn.split('/')
                                                             
                                                             if len(path_len) == 9:
-                                                                path_prefix = ['pathep-\[','\]']
+                                                                path_prefix = [r'pathep-\[',r'\]']
                                                                 leaf_id = l3extRsPathL3OutAtt_dn.split('/')[7].replace('protpaths-','')
                                                                 path_temp = leaf_id + ': ' + l3extRsPathL3OutAtt_dn.split('/')[8]
                                                                 logical_interface_data['path'].append(re.sub('|'.join(sorted(path_prefix, key = len, reverse = True)), '', path_temp))
                                                             else:
-                                                                path_prefix = ['pathep-\[','\]']
+                                                                path_prefix = [r'pathep-\[',r'\]']
                                                                 leaf_id = l3extRsPathL3OutAtt_dn.split('/')[7].replace('paths-','')
                                                                 path_temp = \
                                                                     leaf_id \
@@ -799,7 +912,7 @@ def domToAepCSV(param_apic_url:str, param_cookie:dict):
                     for l in k:
                         if 'infraRsDomP' in k:
                             data = k[l]['attributes']['tDn']
-                            data_prefix = ['uni\/l3dom-','uni\/l2dom-','uni\/phys-','uni\/vmmp-VMware\/dom-']
+                            data_prefix = [r'uni\/l3dom-',r'uni\/l2dom-',r'uni\/phys-',r'uni\/vmmp-VMware\/dom-']
                             aep_dom = re.sub('|'.join(sorted(data_prefix, key = len, reverse = True)), '', data)
                             dom_type = data.split('-')[0].replace('uni/','')
                             csv_writter.writerow(

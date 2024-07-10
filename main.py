@@ -1,5 +1,7 @@
 # code built based on https://gist.github.com/NWMichl/aed4b582f3f922b5e515751d6fa6d6c1
 import parsing
+# new module for troubleshoot purpose
+import parsing_tshot
 import credential
 
 def main():
@@ -10,18 +12,21 @@ def main():
     apic_cookie = parsing.apic_login(apic=credential.apic_url, username=credential.apic_username, password=credential.apic_password)
 
     # execute function
-    parsing.parsingVLANToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
-    parsing.parsingBdToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
-    parsing.parsingEpToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
-    parsing.parsingCdpLldpToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
-    parsing.parsingEpgToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
-    parsing.parsingIntoCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
-    parsing.parsingPcVpcToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
-    parsing.parsingL2outToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
-    parsing.parsingL3outToCsv3(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
-    parsing.domToAepCSV(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
-    parsing.polgroupToAepCSV(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
-    parsing.intToPolgroupCSV(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.parsingVLANToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.parsingBdToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.parsingEpToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    parsing.parsingEpToCsv_aciv5(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    # for gather data tenant, bd, ip and mac for ep rouge exception
+    #parsing_tshot.parsingEpToCsv_ep_rouge(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.parsingCdpLldpToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.parsingEpgToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.parsingIntoCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.parsingPcVpcToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.parsingL2outToCsv(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.parsingL3outToCsv3(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.domToAepCSV(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.polgroupToAepCSV(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
+    #parsing.intToPolgroupCSV(param_apic_url=credential.apic_url,param_cookie=apic_cookie)
 
 
     # logout from apic
